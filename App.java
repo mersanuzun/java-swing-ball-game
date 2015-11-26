@@ -5,7 +5,6 @@ public class App {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					//new MoveALine();
 					new MoveABall();
 				} catch (Exception e) {
 					e.printStackTrace();
