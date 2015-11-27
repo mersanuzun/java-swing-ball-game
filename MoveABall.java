@@ -3,13 +3,18 @@ import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.*;
@@ -20,21 +25,37 @@ import java.awt.Dimension;
 
 public class MoveABall extends JFrame implements ActionListener{
 
-	public static final int CANVAS_HEIGHT = 150;
+	public static final int CANVAS_HEIGHT = 500;
 	public static final int CANVAS_WIDTH = 500;
 	public static final Color CANVAS_BACKGROUND = Color.CYAN;
+	public static final int BARRIER_HEIGHT = 50;
+	public static final int BARRIER_WIDTH = 50;
+	public static Color BALL_COLOR = Color.BLUE;
+	public static Color FORAGE_COLOR = Color.GREEN;
+	public static Color BARRIER_COLOR = Color.BLACK;
 	private DrawCanvas canvas;
-	private Forage forage;
-	private Ball ball;
+	private Ellipse2D forage;
+	private Ellipse2D ball;
+	private Rectangle2D barrier;
 	private Timer timer;
-	private int gameSpeed = 100;
+	private int gameSpeed = 50;
+	private int ballMoveStep = 5;
 	private String direction = "R";
+	private int point = 0;
+	private int barrierNumbers = 5;
+	private ArrayList<Rectangle2D> barriers = new ArrayList<Rectangle2D>();
+	private Random rnd = new Random();
+	
 	/**
 	 * Create the frame.
 	 */
+	
 	public MoveABall() {
+		// timer
 		timer = new Timer(gameSpeed, this);
 		timer.start();
+		
+		// panel for buttons
 		JPanel btnPanel = new JPanel(new BorderLayout());
 		MyListener myListener = new MyListener();
 		JButton lftButton = new JButton("Left");
@@ -53,18 +74,27 @@ public class MoveABall extends JFrame implements ActionListener{
 		downButton.addActionListener(myListener);
 		btnPanel.add(downButton, BorderLayout.SOUTH);
 
+		// main panel, canvas
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		canvas = new DrawCanvas();
 		canvas.setPreferredSize(new Dimension(CANVAS_WIDTH, CANVAS_HEIGHT));
 		mainPanel.add(btnPanel, BorderLayout.EAST);
 		mainPanel.add(canvas, BorderLayout.CENTER);
-		ball = new Ball(CANVAS_WIDTH / 5, CANVAS_HEIGHT / 2, 25, 25, 10, Color.RED);
-		forage = new Forage(CANVAS_WIDTH / 4, CANVAS_HEIGHT / 3, 10, 10, Color.GREEN);		
+		
+		// creation ball, forage and barriers
+		ball = new Ellipse2D.Double(CANVAS_WIDTH / 5, CANVAS_HEIGHT / 2, 25, 25);
+		forage = new Ellipse2D.Double(CANVAS_WIDTH / 4, CANVAS_HEIGHT / 3, 10, 10);		
+		for (int i = 0; i < barrierNumbers; i++){
+			
+		}
+		
+		// setting window size, visibility, focusable
 		setContentPane(mainPanel);
-		setBounds(new Rectangle(CANVAS_WIDTH, CANVAS_HEIGHT + 50));
+		setBounds(new Rectangle(CANVAS_WIDTH + 200, CANVAS_HEIGHT + 50));
 		setVisible(true);
-		//setFocusable(true);
 		requestFocus();
+		
+		// add key listener for controlling the ball with keys
 		addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent e){
 				if (e.getKeyCode() == KeyEvent.VK_DOWN){
@@ -81,16 +111,34 @@ public class MoveABall extends JFrame implements ActionListener{
 		});
 	    
 	}
+	public int[] findPlace(){
+		int coor[] = new int[2];
+		while(coor.length != 2){
+			int x = rnd.nextInt(CANVAS_WIDTH) + 1;
+			int y = rnd.nextInt(CANVAS_HEIGHT) + 1;
+			for (Rectangle2D b : barriers){
+				if (!b.intersects(x, y, BARRIER_WIDTH, BARRIER_HEIGHT)){
+					coor[0] = x;
+					coor[1] = y;
+				}
+			}
+		}
+		return coor;
+	}
+
+	public void forageRePlace(){
+		forage.setFrame(rnd.nextInt(CANVAS_WIDTH) + 1, rnd.nextInt(CANVAS_HEIGHT) + 1, forage.getWidth(), forage.getHeight());
+	}
 	
 	public Boolean isHit(){
-		if (ball.ball.intersects(forage.x, forage.y, forage.width, forage.height)){
+		if (ball.intersects(forage.getX(), forage.getY(), forage.getWidth(), forage.getHeight())){
 			return true;
 		}
 		return false;
 	}
 	
 	public Boolean isInside(){
-		if (((ball.x > 0) && (ball.x < CANVAS_WIDTH)) && ((ball.y > 0 ) && (ball.y < CANVAS_HEIGHT))){
+		if (((ball.getX() > 0) && (ball.getX() + ball.getWidth() < CANVAS_WIDTH)) && ((ball.getY() > 0 ) && (ball.getY() + ball.getHeight() < CANVAS_HEIGHT))){
 			return true;
 		}
 		return false;
@@ -118,29 +166,46 @@ public class MoveABall extends JFrame implements ActionListener{
 		public void paintComponent(Graphics g){
 			super.paintComponent(g);
 			setBackground(CANVAS_BACKGROUND);
-			ball.paint(g);
-			forage.paint(g);
+			Graphics2D g2 = (Graphics2D) g;
+			g2.setColor(Color.blue);
+			g2.drawLine(0, 0, CANVAS_WIDTH, 0);
+			g2.drawLine(CANVAS_WIDTH, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+			g2.drawLine(CANVAS_WIDTH, CANVAS_HEIGHT, 0, CANVAS_HEIGHT);
+			g2.drawLine(0, CANVAS_WIDTH, 0, 0);
+			g2.setColor(BALL_COLOR);
+			g2.fill(ball);
+			g2.setColor(FORAGE_COLOR);
+			g2.fill(forage);
 		}
 	}
+	
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		switch(direction){
 			case "U" : 
-				ball.y -= ball.moveStep;
+				ball.setFrame(ball.getX(), ball.getY() - ballMoveStep, ball.getWidth(), ball.getHeight());
 				break;
 			case "D" : 
-				ball.y += ball.moveStep;
+				ball.setFrame(ball.getX(), ball.getY() + ballMoveStep, ball.getWidth(), ball.getHeight());
 				break;
 			case "L" : 
-				ball.x -= ball.moveStep;
+				ball.setFrame(ball.getX() - ballMoveStep, ball.getY(), ball.getWidth(), ball.getHeight());
 				break;
 			case "R" : 
-				ball.x += ball.moveStep;
+				ball.setFrame(ball.getX() + ballMoveStep, ball.getY(), ball.getWidth(), ball.getHeight());
 				break;
 		}
-		repaint();
 		if (isHit()) {
-			forage.rePlace(CANVAS_WIDTH, CANVAS_HEIGHT);
+			forageRePlace();
+			gameSpeed *=  new Double(1.01);
+			System.out.println(gameSpeed);
+			point += 1;
 		}
+		if (!isInside()){
+			timer.stop();
+			System.out.println(point);
+		}
+		repaint();
 	}
+	
 }
