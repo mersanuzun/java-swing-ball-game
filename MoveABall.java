@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,6 +36,8 @@ public class MoveABall extends JFrame implements ActionListener{
 	public static Color BARRIER_COLOR = Color.BLACK;
 	private DrawCanvas canvas;
 	private Ellipse2D forage;
+	private int forageWidth = 80;
+	private int forageHeight = 80;
 	private Ellipse2D ball;
 	private Rectangle2D barrier;
 	private Timer timer;
@@ -83,10 +86,10 @@ public class MoveABall extends JFrame implements ActionListener{
 		
 		// creation ball, forage and barriers
 		ball = new Ellipse2D.Double(CANVAS_WIDTH / 5, CANVAS_HEIGHT / 2, 25, 25);
-		forage = new Ellipse2D.Double(CANVAS_WIDTH / 4, CANVAS_HEIGHT / 3, 10, 10);	
+		forage = new Ellipse2D.Double(CANVAS_WIDTH / 4, CANVAS_HEIGHT / 3, forageWidth, forageHeight);	
 		System.out.println("başladı");
 		for (int i = 0; i < barrierNumbers; i++){
-			ArrayList<Integer> coor = findPlace();
+			ArrayList<Integer> coor = findBarrierPlace();
 			barriers.add(new Rectangle2D.Double(coor.get(0), coor.get(1), BARRIER_WIDTH, BARRIER_HEIGHT));
 		}
 		System.out.println("bitti");
@@ -113,13 +116,14 @@ public class MoveABall extends JFrame implements ActionListener{
 		});
 	    
 	}
-	public ArrayList<Integer> findPlace(){
+	
+	public ArrayList<Integer> findBarrierPlace(){
 		ArrayList<Integer> coor = new ArrayList<Integer>();
 		while(true){
 			int counter = 0;
 			int x = rnd.nextInt(CANVAS_WIDTH - BARRIER_WIDTH) + 1;
 			int y = rnd.nextInt(CANVAS_HEIGHT - BARRIER_HEIGHT) + 1;
-			if (ball.intersects(x, y, ball.getWidth() + 5, ball.getHeight() + 5)){
+			if (ball.intersects(x, y, ball.getWidth() , ball.getHeight() )){
 				continue;
 			}
 			for (Rectangle2D b : barriers){
@@ -136,9 +140,32 @@ public class MoveABall extends JFrame implements ActionListener{
 		}
 		return coor;
 	}
+	public ArrayList<Integer> findForagePlace(){
+		ArrayList<Integer> coor = new ArrayList<Integer>();
+		while(true){
+			int counter = 0;
+			int x = rnd.nextInt(CANVAS_WIDTH - forageWidth) + 1;
+			int y = rnd.nextInt(CANVAS_HEIGHT - forageHeight) + 1;
+			if (ball.intersects(x, y, ball.getWidth() , ball.getHeight() )){
+				continue;
+			}
+			for (Rectangle2D b : barriers){
+				if ((b.intersects(x, y, forageWidth, forageHeight))){
+					break;
+				}
+				counter++;
+			}
+			if (counter == barriers.size()){
+				coor.add(x);
+				coor.add(y);
+				break;
+			}
+		}
+		return coor;
+	}
 
 	public void forageRePlace(){
-		ArrayList<Integer> coor = findPlace();
+		ArrayList<Integer> coor = findForagePlace();
 		forage.setFrame(coor.get(0), coor.get(1), forage.getWidth(), forage.getHeight());
 	}
 	
