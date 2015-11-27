@@ -1,1 +1,2 @@
-# java-swing-ball-game
+# A Ball Game
+  Collecting forages with a ball
