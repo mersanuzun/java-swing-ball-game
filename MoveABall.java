@@ -38,8 +38,8 @@ public class MoveABall extends JFrame implements ActionListener{
 	private Ellipse2D ball;
 	private Rectangle2D barrier;
 	private Timer timer;
-	private int gameSpeed = 50;
-	private int ballMoveStep = 5;
+	private int gameSpeed = 10;
+	private int ballMoveStep = 1;
 	private String direction = "R";
 	private int point = 0;
 	private int barrierNumbers = 5;
@@ -83,11 +83,13 @@ public class MoveABall extends JFrame implements ActionListener{
 		
 		// creation ball, forage and barriers
 		ball = new Ellipse2D.Double(CANVAS_WIDTH / 5, CANVAS_HEIGHT / 2, 25, 25);
-		forage = new Ellipse2D.Double(CANVAS_WIDTH / 4, CANVAS_HEIGHT / 3, 10, 10);		
+		forage = new Ellipse2D.Double(CANVAS_WIDTH / 4, CANVAS_HEIGHT / 3, 10, 10);	
+		System.out.println("başladı");
 		for (int i = 0; i < barrierNumbers; i++){
-			
+			ArrayList<Integer> coor = findPlace();
+			barriers.add(new Rectangle2D.Double(coor.get(0), coor.get(1), BARRIER_WIDTH, BARRIER_HEIGHT));
 		}
-		
+		System.out.println("bitti");
 		// setting window size, visibility, focusable
 		setContentPane(mainPanel);
 		setBounds(new Rectangle(CANVAS_WIDTH + 200, CANVAS_HEIGHT + 50));
@@ -111,28 +113,47 @@ public class MoveABall extends JFrame implements ActionListener{
 		});
 	    
 	}
-	public int[] findPlace(){
-		int coor[] = new int[2];
-		while(coor.length != 2){
-			int x = rnd.nextInt(CANVAS_WIDTH) + 1;
-			int y = rnd.nextInt(CANVAS_HEIGHT) + 1;
+	public ArrayList<Integer> findPlace(){
+		ArrayList<Integer> coor = new ArrayList<Integer>();
+		while(true){
+			int counter = 0;
+			int x = rnd.nextInt(CANVAS_WIDTH - BARRIER_WIDTH) + 1;
+			int y = rnd.nextInt(CANVAS_HEIGHT - BARRIER_HEIGHT) + 1;
+			if (ball.intersects(x, y, ball.getWidth() + 5, ball.getHeight() + 5)){
+				continue;
+			}
 			for (Rectangle2D b : barriers){
-				if (!b.intersects(x, y, BARRIER_WIDTH, BARRIER_HEIGHT)){
-					coor[0] = x;
-					coor[1] = y;
+				if ((b.intersects(x, y, BARRIER_WIDTH, BARRIER_HEIGHT))){
+					break;
 				}
+				counter++;
+			}
+			if (counter == barriers.size()){
+				coor.add(x);
+				coor.add(y);
+				break;
 			}
 		}
 		return coor;
 	}
 
 	public void forageRePlace(){
-		forage.setFrame(rnd.nextInt(CANVAS_WIDTH) + 1, rnd.nextInt(CANVAS_HEIGHT) + 1, forage.getWidth(), forage.getHeight());
+		ArrayList<Integer> coor = findPlace();
+		forage.setFrame(coor.get(0), coor.get(1), forage.getWidth(), forage.getHeight());
 	}
 	
 	public Boolean isHit(){
 		if (ball.intersects(forage.getX(), forage.getY(), forage.getWidth(), forage.getHeight())){
 			return true;
+		}
+		return false;
+	}
+	
+	public Boolean ishitBarrier(){
+		for (Rectangle2D b : barriers){
+			if (ball.intersects(b)){
+				return true;
+			}
 		}
 		return false;
 	}
@@ -176,6 +197,10 @@ public class MoveABall extends JFrame implements ActionListener{
 			g2.fill(ball);
 			g2.setColor(FORAGE_COLOR);
 			g2.fill(forage);
+			g2.setColor(BARRIER_COLOR);
+			for (Rectangle2D b : barriers){
+				g2.fill(b);
+			}
 		}
 	}
 	
@@ -201,9 +226,13 @@ public class MoveABall extends JFrame implements ActionListener{
 			System.out.println(gameSpeed);
 			point += 1;
 		}
-		if (!isInside()){
+
+		if ((!isInside())){
 			timer.stop();
 			System.out.println(point);
+		}
+		if (ishitBarrier()){
+			timer.stop();
 		}
 		repaint();
 	}
