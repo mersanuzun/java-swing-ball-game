@@ -213,7 +213,10 @@ public class MoveABall extends JFrame implements ActionListener {
 		forage = null;
 		barriers.removeAll(barriers);
 		walls.removeAll(walls);
-		ball = new Ellipse2D.Double(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, BALL_WIDTH, BALL_HEIGHT);
+		if (smallSize)
+			ball = new Ellipse2D.Double(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, SMALL_BALL_WIDTH, SMALL_BALL_HEIGHT);
+		else
+			ball = new Ellipse2D.Double(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, BALL_WIDTH, BALL_HEIGHT);
 		forage = new Ellipse2D.Double(CANVAS_WIDTH / 4, CANVAS_HEIGHT / 3, forageWidth, forageHeight);
 		for (int i = 0; i < (levels.get(levelIndex)).getBarrierNumbers(); i++) {
 			ArrayList<Integer> coor = findBarrierPlace();
