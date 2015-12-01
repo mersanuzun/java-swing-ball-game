@@ -2,8 +2,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Shape;
@@ -29,9 +31,13 @@ public class MoveABall extends JFrame implements ActionListener {
 
 	public static final int CANVAS_HEIGHT = 500;
 	public static final int CANVAS_WIDTH = 500;
-	public static final Color CANVAS_BACKGROUND = Color.CYAN;
+	public static final Color CANVAS_BACKGROUND = Color.WHITE;
 	public static final int BARRIER_HEIGHT = 50;
 	public static final int BARRIER_WIDTH = 50;
+	public static final int SMALL_BALL_WIDTH = 10;
+	public static final int SMALL_BALL_HEIGHT = 10;
+	public static final int BALL_WIDTH = 20;
+	public static final int BALL_HEIGHT = 20;
 	public static Color PEN_COLOR = Color.RED;
 	public static Color BALL_COLOR = Color.BLUE;
 	public static Color FORAGE_COLOR = Color.GREEN;
@@ -39,14 +45,14 @@ public class MoveABall extends JFrame implements ActionListener {
 	public static Color WALL_COLOR = Color.RED;
 	private DrawCanvas canvas;
 	private Ellipse2D forage;
-	private int forageWidth = 10;
-	private int forageHeight = 10;
+	private int forageWidth = 15;
+	private int forageHeight = 15;
 	private Ellipse2D ball;
 	private Rectangle2D barrier;
 	JButton restartButton;
 	private Timer timer;
 	private int ballMoveStep = 1;
-	private String direction = "R";
+	private String direction;
 	private int point = 0;
 	private int levelIndex = 0;
 	private String gameStatus;
@@ -54,6 +60,8 @@ public class MoveABall extends JFrame implements ActionListener {
 	private ArrayList<Rectangle2D> barriers = new ArrayList<Rectangle2D>();
 	private ArrayList<GameLevel> levels = new ArrayList<GameLevel>();
 	private Random rnd = new Random();
+	private JLabel lblScore;
+	private JLabel lblLevel;
 
 	/**
 	 * Create the frame.
@@ -91,11 +99,14 @@ public class MoveABall extends JFrame implements ActionListener {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				point = 0;
 				levelIndex = 0;
 				prepareLevels();
 				prepareGame();
 				requestFocus();
 				restartButton.setVisible(false);
+				lblLevel.setText("LEVEL : " + levels.get(levelIndex).getLevel());
+				lblScore.setText("LEVEL : " + point);
 			}
 
 		});
@@ -109,7 +120,21 @@ public class MoveABall extends JFrame implements ActionListener {
 		// creation ball, forage, walls and barriers
 		gameStatus = "GAME_INIT";
 		prepareGame();
-
+		
+		//score panel
+		JPanel scorePanel = new JPanel();
+		scorePanel.setLayout(new GridLayout(2, 2));
+		lblScore = new JLabel("SCORE : 0");
+		lblLevel = new JLabel("LEVEL : 1");
+		lblLevel.setFont(new Font("Serif", Font.PLAIN, 25));
+		lblLevel.setForeground(Color.PINK);
+		lblScore.setFont(new Font("Serif", Font.PLAIN, 25));
+		lblScore.setForeground(Color.PINK);
+		scorePanel.add(lblScore);
+		scorePanel.add(lblLevel);
+		scorePanel.setBackground(Color.DARK_GRAY);
+		mainPanel.add(scorePanel, BorderLayout.SOUTH);
+		
 		// setting window size, visibility, focusable
 		setContentPane(mainPanel);
 		setBounds(new Rectangle(CANVAS_WIDTH + 200, CANVAS_HEIGHT + 75));
@@ -137,11 +162,23 @@ public class MoveABall extends JFrame implements ActionListener {
 						gameStatus = "GAME_STARTED";
 						checkTimer();
 					}
+				}else if (gameStatus.equalsIgnoreCase("NEXT_LEVEL")){
+					if (e.getKeyCode() == KeyEvent.VK_SPACE){
+						prepareGame();
+						timer.setDelay(levels.get(levelIndex).getGameSpeed());
+					}
 				}
 			}
 		});
 	}
 	
+	public void updateLblLevel(int level){
+		lblLevel.setText("LEVEL : " + level);
+	}
+	
+	public void updateLblScore(int point){
+		lblScore.setText("SCORE : " + point);
+	}
 	// define levels
 	public void prepareLevels() {
 		levels.removeAll(levels);
@@ -183,7 +220,7 @@ public class MoveABall extends JFrame implements ActionListener {
 			int x = rnd.nextInt(CANVAS_WIDTH - BARRIER_WIDTH) + 1;
 			int y = rnd.nextInt(CANVAS_HEIGHT - BARRIER_HEIGHT) + 1;
 			if ((ball.intersects(x, y, BARRIER_WIDTH, BARRIER_HEIGHT)
-					|| (forage.intersects(x, y, forage.getWidth(), forage.getHeight())))) {
+					|| (forage.intersects(x, y, BARRIER_WIDTH, BARRIER_HEIGHT)))) {
 				continue;
 			}
 			for (Rectangle2D b : barriers) {
@@ -205,8 +242,8 @@ public class MoveABall extends JFrame implements ActionListener {
 		ArrayList<Integer> coor = new ArrayList<Integer>();
 		while (true) {
 			int counter = 0;
-			int x = rnd.nextInt(CANVAS_WIDTH - forageWidth) + 1;
-			int y = rnd.nextInt(CANVAS_HEIGHT - forageHeight) + 1;
+			int x = rnd.nextInt(CANVAS_WIDTH - (int)forage.getWidth()) + 1;
+			int y = rnd.nextInt(CANVAS_HEIGHT - (int)forage.getHeight()) + 1;
 			if (ball.intersects(x, y, ball.getWidth(), ball.getHeight())) {
 				continue;
 			}
@@ -300,38 +337,41 @@ public class MoveABall extends JFrame implements ActionListener {
 			if (gameStatus.equalsIgnoreCase("GAME_INIT")) {
 				g2.drawString("Press the arrow keys to start", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
 			}
+			if (gameStatus.equalsIgnoreCase("NEXT_LEVEL")){
+				g2.drawString("Press the space key for next level.", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+			}
 		}
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		switch (direction) {
-		case "U":
-			ball.setFrame(ball.getX(), ball.getY() - ballMoveStep, ball.getWidth(), ball.getHeight());
-			break;
-		case "D":
-			ball.setFrame(ball.getX(), ball.getY() + ballMoveStep, ball.getWidth(), ball.getHeight());
-			break;
-		case "L":
-			ball.setFrame(ball.getX() - ballMoveStep, ball.getY(), ball.getWidth(), ball.getHeight());
-			break;
-		case "R":
-			ball.setFrame(ball.getX() + ballMoveStep, ball.getY(), ball.getWidth(), ball.getHeight());
-			break;
+			case "U":
+				ball.setFrame(ball.getX(), ball.getY() - ballMoveStep, ball.getWidth(), ball.getHeight());
+				break;
+			case "D":
+				ball.setFrame(ball.getX(), ball.getY() + ballMoveStep, ball.getWidth(), ball.getHeight());
+				break;
+			case "L":
+				ball.setFrame(ball.getX() - ballMoveStep, ball.getY(), ball.getWidth(), ball.getHeight());
+				break;
+			case "R":
+				ball.setFrame(ball.getX() + ballMoveStep, ball.getY(), ball.getWidth(), ball.getHeight());
+				break;
 		}
 		if (isHit()) {
+			point++;
 			forageRePlace();
 			levels.get(levelIndex).setGameSpeed((int) (levels.get(levelIndex).getGameSpeed() * 0.9));
 			timer.setDelay(levels.get(levelIndex).getGameSpeed());
 			System.out.println(levels.get(levelIndex).getGameSpeed() + " " + levels.get(levelIndex).getLevel());
 			levels.get(levelIndex).setForageNumbers(levels.get(levelIndex).getForageNumbers() - 1);
+			updateLblScore(point);
 			if (levels.get(levelIndex).getForageNumbers() == 0) {
 				gameStatus = "NEXT_LEVEL";
 				levelIndex++;
 				timer.stop();
-				prepareGame();
-				timer.setDelay(levels.get(levelIndex).getGameSpeed());
-
+				updateLblLevel(levels.get(levelIndex).getLevel());
 			}
 		}
 
