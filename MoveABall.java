@@ -36,8 +36,8 @@ public class MoveABall extends JFrame implements ActionListener {
 	public static final int BARRIER_WIDTH = 50;
 	public static final int SMALL_BALL_WIDTH = 10;
 	public static final int SMALL_BALL_HEIGHT = 10;
-	public static final int BALL_WIDTH = 20;
-	public static final int BALL_HEIGHT = 20;
+	public static final int BALL_WIDTH = 25;
+	public static final int BALL_HEIGHT = 25;
 	public static Color PEN_COLOR = Color.RED;
 	public static Color BALL_COLOR = Color.BLUE;
 	public static Color FORAGE_COLOR = Color.GREEN;
@@ -62,6 +62,9 @@ public class MoveABall extends JFrame implements ActionListener {
 	private Random rnd = new Random();
 	private JLabel lblScore;
 	private JLabel lblLevel;
+	private Boolean smallSize = false;
+	private JLabel lblSmallSize;
+	private JLabel lblBigSize;
 
 	/**
 	 * Create the frame.
@@ -117,10 +120,6 @@ public class MoveABall extends JFrame implements ActionListener {
 		mainPanel.add(restartButton, BorderLayout.EAST);
 		mainPanel.add(canvas, BorderLayout.CENTER);
 
-		// creation ball, forage, walls and barriers
-		gameStatus = "GAME_INIT";
-		prepareGame();
-		
 		//score panel
 		JPanel scorePanel = new JPanel();
 		scorePanel.setLayout(new GridLayout(2, 2));
@@ -130,8 +129,13 @@ public class MoveABall extends JFrame implements ActionListener {
 		lblLevel.setForeground(Color.PINK);
 		lblScore.setFont(new Font("Serif", Font.PLAIN, 25));
 		lblScore.setForeground(Color.PINK);
+		lblBigSize = new JLabel("BIG SIZE (Press S)");
+		lblBigSize.setForeground(Color.PINK);
+		lblSmallSize = new JLabel("SMALL SIZE (Press S)");
 		scorePanel.add(lblScore);
 		scorePanel.add(lblLevel);
+		scorePanel.add(lblBigSize);
+		scorePanel.add(lblSmallSize);
 		scorePanel.setBackground(Color.DARK_GRAY);
 		mainPanel.add(scorePanel, BorderLayout.SOUTH);
 		
@@ -161,6 +165,18 @@ public class MoveABall extends JFrame implements ActionListener {
 						direction = "R";
 						gameStatus = "GAME_STARTED";
 						checkTimer();
+					}else if (e.getKeyCode() == KeyEvent.VK_S){
+						if (smallSize){
+							smallSize = false;
+							ball.setFrame(ball.getX(), ball.getY(), BALL_WIDTH, BALL_HEIGHT);
+							lblBigSize.setForeground(Color.PINK);
+							lblSmallSize.setForeground(new Color(51, 51, 51));
+						}else {
+							smallSize = true;
+							ball.setFrame(ball.getX(), ball.getY(), SMALL_BALL_WIDTH, SMALL_BALL_HEIGHT);
+							lblSmallSize.setForeground(Color.PINK);
+							lblBigSize.setForeground(new Color(51, 51, 51));
+						}
 					}
 				}else if (gameStatus.equalsIgnoreCase("NEXT_LEVEL")){
 					if (e.getKeyCode() == KeyEvent.VK_SPACE){
@@ -170,6 +186,10 @@ public class MoveABall extends JFrame implements ActionListener {
 				}
 			}
 		});
+		// creation ball, forage, walls and barriers
+			gameStatus = "GAME_INIT";
+			prepareGame();
+				
 	}
 	
 	public void updateLblLevel(int level){
@@ -193,7 +213,7 @@ public class MoveABall extends JFrame implements ActionListener {
 		forage = null;
 		barriers.removeAll(barriers);
 		walls.removeAll(walls);
-		ball = new Ellipse2D.Double(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 25, 25);
+		ball = new Ellipse2D.Double(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, BALL_WIDTH, BALL_HEIGHT);
 		forage = new Ellipse2D.Double(CANVAS_WIDTH / 4, CANVAS_HEIGHT / 3, forageWidth, forageHeight);
 		for (int i = 0; i < (levels.get(levelIndex)).getBarrierNumbers(); i++) {
 			ArrayList<Integer> coor = findBarrierPlace();
@@ -204,6 +224,13 @@ public class MoveABall extends JFrame implements ActionListener {
 		walls.add(new Line2D.Double(CANVAS_WIDTH, CANVAS_HEIGHT, 0, CANVAS_HEIGHT));
 		walls.add(new Line2D.Double(0, CANVAS_WIDTH, 0, 0));
 		repaint();
+		if (!smallSize){
+			lblBigSize.setForeground(Color.PINK);
+			lblSmallSize.setForeground(new Color(51, 51, 51));
+		}else {
+			lblSmallSize.setForeground(Color.PINK);
+			lblBigSize.setForeground(new Color(51, 51, 51));
+		}
 		gameStatus = "GAME_INIT";
 	}
 
